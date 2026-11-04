@@ -48,5 +48,8 @@
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
+	},
+	"dependencies": {
+		"near-api-js": "^5.1.1"
 	}
 }

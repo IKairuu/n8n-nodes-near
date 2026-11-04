@@ -1,3 +1,4 @@
+/* eslint-disable @n8n/community-nodes/options-sorted-alphabetically */
 /* eslint-disable n8n-nodes-base/node-class-description-name-miscased */
 /* eslint-disable n8n-nodes-base/node-param-description-missing-final-period */
 /* eslint-disable @n8n/community-nodes/require-node-api-error */
@@ -7,7 +8,10 @@ import type {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	JsonObject,
 } from 'n8n-workflow';
+import { connect, keyStores, KeyPair, utils } from 'near-api-js';
+import type { KeyPairString } from 'near-api-js/lib/utils';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class Example implements INodeType {
@@ -25,32 +29,99 @@ export class Example implements INodeType {
 		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		properties: [
-			// Node properties which the user gets displayed and
-			// can change on the node.
-			{
-				displayName: 'Contract ID',
-				name: 'contractId',
-				type: 'string',
-				default: '',
-				placeholder: 'usdc.fakes.testnet',
-				description: 'The NEAR account ID of the smart contract to call',
+		{
+			displayName: 'Operation',
+			name: 'operation',
+			type: 'options',
+			noDataExpression: true,
+			options: [
+			{ name: 'View Balance', 
+				value: 'viewBalance', 
+				description: 'Get the NEAR balance of an account', 
+				action: 'View balance' 
 			},
-			{
-				displayName: 'Method Name',
-				name: 'methodName',
-				type: 'string',
-				default: '',
-				placeholder: 'ft_transfer',
-				description: 'The contract method to call, e.g. ft_transfer or get_balance'
+			{ 
+				name: 'Call Contract Method', 
+				value: 'callMethod', 
+				description: 'Sign and send a call to a smart contract', 
+				action: 'Call contract method' },
+			],
+			default: 'viewBalance',
+		},
+		{
+			displayName: 'Account ID',
+			name: 'accountId',
+			type: 'string',
+			default: '',
+			placeholder: 'alice.testnet',
+			description: 'The NEAR account to check',
+			displayOptions: { 
+				show: { 
+					operation: ['viewBalance'] 
+				} 
 			},
-			{
-				displayName: 'Amount',
-				name: 'amount',
-				type: 'number',
-				default: 0,
-				placeholder: '1.5',
-				description: 'Amount of NEAR to attach to the call. Leave 0 for none'
-			}
+		},
+		{
+			displayName: 'Contract ID',
+			name: 'contractId',
+			type: 'string',
+			default: '',
+			placeholder: 'usdc.fakes.testnet',
+			description: 'The NEAR account ID of the smart contract to call',
+			displayOptions: { 
+				show: { 
+					operation: ['callMethod'],
+				} 
+			},
+		},
+		{
+			displayName: 'Method Name',
+			name: 'methodName',
+			type: 'string',
+			default: '',
+			placeholder: 'ft_transfer',
+			description: 'The contract method to call',
+			displayOptions: { 
+				show: { 
+					operation: ['callMethod'] 
+				} 
+			},
+		},
+		{
+			displayName: 'Arguments',
+			name: 'args',
+			type: 'json',
+			default: '{}',
+			description: 'Arguments for the method, as JSON',
+			displayOptions: { 
+				show: { 
+					operation: ['callMethod'] 
+				} 
+			},
+		},
+		{
+			displayName: 'Deposit (NEAR)',
+			name: 'deposit',
+			type: 'string',
+			default: '0',
+			description: 'NEAR to attach. Use 0.000000000000000000000001 (1 yocto) for ft_transfer',
+			displayOptions: { 
+				show: { 
+					operation: ['callMethod'] 
+				} 
+			},
+		},
+		{
+			displayName: 'Gas (TGas)',
+			name: 'gas',
+			type: 'number',
+			default: 30,
+			displayOptions: { 
+				show: { 
+					operation: ['callMethod'] 
+				} 
+			},
+		},
 		],
 	};
 
@@ -62,23 +133,64 @@ export class Example implements INodeType {
 		const items = this.getInputData();
 
 		let item: INodeExecutionData;
+		let operation: string;
+		let accountId: string;
 		let contractId: string;
 		let methodName: string;
-		let amount: number;
+		let argument: JsonObject;
+		let deposit: string;
+		let gas: number;
 
 		// Iterates over all input items and add the key "myString" with the
 		// value the parameter "myString" resolves to.
 		// (This could be a different value for each item in case it contains an expression)
+		const creds = await this.getCredentials('nearApi');
+		const networkId = creds.network as string;
+		const signerId = creds.accountId as string;
+		const nodeUrl =
+			(creds.rpcUrl as string) ||
+			(networkId === 'mainnet' ? 'https://free.rpc.fastnear.com' : 'https://test.rpc.fastnear.com');
+
+		const keyStore = new keyStores.InMemoryKeyStore();
+		await keyStore.setKey(networkId, signerId, KeyPair.fromString(creds.privateKey as KeyPairString));
+		const near = await connect({ networkId, nodeUrl, keyStore });
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
-				contractId = this.getNodeParameter('contractId', itemIndex, '') as string;
-				methodName = this.getNodeParameter('methodName', itemIndex, '') as string;
-				amount = this.getNodeParameter('amount', itemIndex, '') as number;
+				operation = this.getNodeParameter('operation', itemIndex) as string;
 				item = items[itemIndex];
 
-				item.json.contractId = contractId;
-				item.json.methodName = methodName;
-				item.json.amount = amount;
+				if (operation === 'viewBalance') {
+					accountId = this.getNodeParameter('accountId', itemIndex) as string;
+					const account = await near.account(accountId);
+					const bal = await account.getAccountBalance();
+					item.json = {
+						accountId,
+						available: utils.format.formatNearAmount(bal.available),
+						total: utils.format.formatNearAmount(bal.total),
+					};
+				} else if (operation === 'callMethod') {
+					contractId = this.getNodeParameter('contractId', itemIndex) as string;
+					methodName = this.getNodeParameter('methodName', itemIndex) as string;
+					const rawArgs = this.getNodeParameter('args', itemIndex, '{}');
+					argument = (typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs) as JsonObject;
+					deposit = this.getNodeParameter('deposit', itemIndex, '0') as string;
+					gas = this.getNodeParameter('gas', itemIndex, 30) as number;
+
+					const signer = await near.account(signerId);
+					const result = await signer.functionCall({
+						contractId,
+						methodName,
+						args: argument,
+						gas: BigInt(gas) * BigInt(1_000_000_000_000), // TGas -> gas
+						attachedDeposit: BigInt(utils.format.parseNearAmount(deposit) ?? '0'),
+					});
+					item.json = {
+						contractId,
+						methodName,
+						txHash: result.transaction.hash,
+						status: result.status as unknown as JsonObject,
+					};
+				}
 			} catch (error) {
 				// This node should never fail but we want to showcase how
 				// to handle errors.
