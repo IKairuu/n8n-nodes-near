@@ -1,3 +1,5 @@
+/* eslint-disable n8n-nodes-base/node-class-description-name-miscased */
+/* eslint-disable n8n-nodes-base/node-param-description-missing-final-period */
 /* eslint-disable @n8n/community-nodes/require-node-api-error */
 /* eslint-disable @n8n/community-nodes/require-node-description-fields */
 import type {
@@ -10,14 +12,14 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class Example implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Example',
-		name: 'example',
-		icon: { light: 'file:example.svg', dark: 'file:example.dark.svg' },
+		displayName: 'NEAR',
+		name: 'NEAR',
+		icon: { light: 'file:near-logo-dark.svg', dark: 'file:near-logo-light.svg' },
 		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',
 		defaults: {
-			name: 'Example',
+			name: 'NEAR',
 		},
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
@@ -26,13 +28,29 @@ export class Example implements INodeType {
 			// Node properties which the user gets displayed and
 			// can change on the node.
 			{
-				displayName: 'HAHAHA',
-				name: 'myString',
+				displayName: 'Contract ID',
+				name: 'contractId',
 				type: 'string',
 				default: '',
-				placeholder: 'Placeholder value',
-				description: 'The description text',
+				placeholder: 'usdc.fakes.testnet',
+				description: 'The NEAR account ID of the smart contract to call',
 			},
+			{
+				displayName: 'Method Name',
+				name: 'methodName',
+				type: 'string',
+				default: '',
+				placeholder: 'ft_transfer',
+				description: 'The contract method to call, e.g. ft_transfer or get_balance'
+			},
+			{
+				displayName: 'Amount',
+				name: 'amount',
+				type: 'number',
+				default: 0,
+				placeholder: '1.5',
+				description: 'Amount of NEAR to attach to the call. Leave 0 for none'
+			}
 		],
 	};
 
@@ -44,17 +62,23 @@ export class Example implements INodeType {
 		const items = this.getInputData();
 
 		let item: INodeExecutionData;
-		let myString: string;
+		let contractId: string;
+		let methodName: string;
+		let amount: number;
 
 		// Iterates over all input items and add the key "myString" with the
 		// value the parameter "myString" resolves to.
 		// (This could be a different value for each item in case it contains an expression)
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
-				myString = this.getNodeParameter('myString', itemIndex, '') as string;
+				contractId = this.getNodeParameter('contractId', itemIndex, '') as string;
+				methodName = this.getNodeParameter('methodName', itemIndex, '') as string;
+				amount = this.getNodeParameter('amount', itemIndex, '') as number;
 				item = items[itemIndex];
 
-				item.json.myString = myString;
+				item.json.contractId = contractId;
+				item.json.methodName = methodName;
+				item.json.amount = amount;
 			} catch (error) {
 				// This node should never fail but we want to showcase how
 				// to handle errors.
