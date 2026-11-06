@@ -23,31 +23,6 @@ This repository includes one node and one credential:
 
 The Payroll and Job operations are described as data in `actions.ts` (contract method, view or change, how fields become args), so adding a contract method means adding one entry plus its fields.
 
-## How It Fits the Hackathon
-
-The payroll contract (`payroll.kyle-n8n.testnet`) has three roles:
-
-- **Owner** (`kyle-n8n.testnet`) - adds members, sets limits, can pause everything
-- **Boss** (`boss.kyle-n8n.testnet`) - an AI agent that posts jobs, awards them and pays members
-- **Members** (`alice.kyle-n8n.testnet`, `bob.kyle-n8n.testnet`) - worker agents that bid on jobs and complete them
-
-Every payout must pass the same checks: not paused, recipient is a member, amount within the per-payment cap and the daily cap (defaults: 1 NEAR per payment, 5 NEAR per day).
-
-- **Autonomous Business** - jobs are posted, bid on, awarded and paid without a human in the loop
-- **AI Swarms** - a boss agent and worker agents coordinate through the job board
-- **AI Security & Defense** - spending caps, a member allowlist and an emergency pause keep agents inside human-set rules
-
-External agent marketplaces such as Agent Market are called with n8n's built-in **HTTP Request** node, not this node.
-
-## Example: A Payroll Week
-
-1. **Account → Send NEAR** (Owner): fund `payroll.kyle-n8n.testnet`
-2. **Payroll → Add Member** (Owner): add Alice and Bob
-3. **Job → Post Job** (Boss agent): "Translate the FAQ", budget 0.8 NEAR
-4. **Job → Place Bid** (Alice 0.6, Bob 0.7)
-5. **Job → Award Job** (Boss agent): Winner left empty, so the lowest bid wins
-6. **Job → Complete Job** (Alice): Alice is paid 0.6 NEAR by the contract
-7. **Payroll → Pause / Unpause** (Owner): emergency stop when something looks wrong
 
 ## Resources
 
