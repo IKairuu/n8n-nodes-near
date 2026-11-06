@@ -18,9 +18,6 @@ This repository includes one node and one credential:
   - `usableAsTool: true`, so an n8n AI Agent can call the operations directly
 - **[NEAR API credential](credentials/NearApi.credentials.ts)** - Account ID, private key (`ed25519:...`), network (testnet/mainnet) and an optional RPC URL (defaults to FastNEAR)
 
-> [!TIP]
-> The role (owner, boss, worker) comes from the credential you pick on the node, not from a field. If the wrong account tries an action, the contract rejects it (for example `only owner`). That rejection is part of the security demo.
-
 The Payroll and Job operations are described as data in `actions.ts` (contract method, view or change, how fields become args), so adding a contract method means adding one entry plus its fields.
 
 
