@@ -32,8 +32,7 @@
 		"strict": true,
 		"credentials": ["dist/credentials/NearApi.credentials.js"],
 		"nodes": [
-			"dist/nodes/GithubIssues/GithubIssues.node.js",
-			"dist/nodes/Example/Example.node.js"
+			"dist/nodes/src/Main.node.js"
 		]
 	},
 	"devDependencies": {

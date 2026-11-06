@@ -1,3 +1,5 @@
+/* eslint-disable @n8n/community-nodes/no-restricted-imports */
+/* eslint-disable n8n-nodes-base/node-param-options-type-unsorted-items */
 /* eslint-disable @n8n/community-nodes/no-credential-reuse */
 /* eslint-disable @n8n/community-nodes/valid-credential-references */
 /* eslint-disable @n8n/community-nodes/options-sorted-alphabetically */
@@ -24,7 +26,7 @@ const JOB_ID_OPS = ['award', 'bid', 'complete', 'getJob', 'getBids'];
 
 const TGAS = BigInt(1_000_000_000_000); // 1 TGas = 10^12 gas
 
-export class Example implements INodeType {
+export class Main implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'NEAR',
 		name: 'NEAR',
