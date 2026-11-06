@@ -7,14 +7,7 @@
 	"keywords": [
 		"n8n-community-node-package"
 	],
-	"author": {
-		"name": "",
-		"email": ""
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
-	},
+	"author": "",
 	"scripts": {
 		"build": "n8n-node build",
 		"build:watch": "tsc --watch",
